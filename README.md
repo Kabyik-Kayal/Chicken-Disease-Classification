@@ -38,9 +38,19 @@ This project uses Convolutional Neural Networks to identify chicken diseases fro
 git clone https://github.com/kabyik-kayal/Chicken-Disease-Classification.git
 cd Chicken-Disease-Classification
 
-# Create and activate conda environment
+# Create and activate your environment
+
+#### If using Conda
 conda create -n cnncls python=3.8 -y
 conda activate cnncls
+
+#### If using venv
+python -m venv venv
+# Activate virtual environment
+## On Windows
+venv\Scripts\activate
+## On Linux or MacOS
+source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
