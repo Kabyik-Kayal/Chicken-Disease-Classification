@@ -88,8 +88,9 @@ jobs:
          
       - name: Stop and remove container if running
         run: |
-         docker ps -q --filter "name=ChickenDiseaseClassifier" | grep -q . && docker stop ChickenDiseaseClassifier && docker rm -fv ChickenDiseaseClassifier || echo "No container running"
-       
+          docker ps -aq --filter "name=ChickenDiseaseClassifier" | xargs -r docker stop || true
+          docker ps -aq --filter "name=ChickenDiseaseClassifier" | xargs -r docker rm -fv || true
+      
       - name: Run Docker Image to serve users
         run: |
          docker run -d -p 5000:5000 --name=ChickenDiseaseClassifier -e 'AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}' -e 'AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}' -e 'AWS_REGION=${{ secrets.AWS_REGION }}'  ${{secrets.AWS_ECR_LOGIN_URI}}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
