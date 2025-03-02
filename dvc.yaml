@@ -32,9 +32,9 @@ stages:
       - artifacts/prepare_base_model
     params:
       - IMAGE_SIZE
-      - AUGMENTATION
       - EPOCHS
       - BATCH_SIZE
+      - AUGMENTATION
     outs:
       - artifacts/training/model.h5
   
