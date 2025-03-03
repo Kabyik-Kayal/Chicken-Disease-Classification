@@ -1,55 +1,55 @@
 import numpy as np
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
 import os
 import logging
-import traceback
-import time
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.inception_v3 import preprocess_input
 
 class PredictionPipeline:
     def __init__(self, filename):
         self.filename = filename
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger('prediction')
-
+        # Setup basic logging
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    
     def predict(self):
         try:
-            self.logger.info(f"Starting prediction for {self.filename}")
-            start_time = time.time()
-            
-            # Check if the file exists
+            # Check if file exists
             if not os.path.exists(self.filename):
-                self.logger.error(f"Image file not found: {self.filename}")
-                return [{"error": "Image file not found"}]
-                
-            BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-            model_path = os.path.join(BASE_DIR, "artifacts", "training", "model.h5")
+                logging.error(f"File not found: {self.filename}")
+                return [{"error": "File not found"}]
             
+            # Check if model exists
+            model_path = os.path.join("artifacts", "training", "model.h5")
             if not os.path.exists(model_path):
-                self.logger.error(f"Model file not found: {model_path}")
+                logging.error(f"Model not found at {model_path}")
                 return [{"error": "Model not found"}]
             
-            self.logger.info(f"Loading model from {model_path}")
+            # Load model
             model = load_model(model_path)
-            self.logger.info("Model loaded successfully")
             
-            imagename = self.filename
-            self.logger.info(f"Processing image: {imagename}")
-            test_image = image.load_img(imagename, target_size = (224,224))
-            test_image = image.img_to_array(test_image)
-            test_image = np.expand_dims(test_image, axis = 0)
-            
-            self.logger.info("Running prediction")
-            result = np.argmax(model.predict(test_image), axis=1)
-            self.logger.info(f"Raw prediction result: {result}")
-            
-            prediction = 'Healthy' if result[0] == 1 else 'Coccidiosis'
-            self.logger.info(f"Prediction: {prediction}")
-            self.logger.info(f"Prediction completed in {time.time() - start_time:.2f} seconds")
-            
-            return [{"image": prediction}]
-            
+            # Load and preprocess image
+            try:
+                test_image = image.load_img(self.filename, target_size=(224, 224))
+                test_image = image.img_to_array(test_image)
+                test_image = np.expand_dims(test_image, axis=0)
+                
+                # Make prediction
+                result = model.predict(test_image)
+                prediction_idx = np.argmax(result, axis=1)
+                
+                # Generate response
+                if prediction_idx[0] == 1:
+                    prediction = 'Healthy'
+                else:
+                    prediction = 'Coccidiosis'
+                
+                logging.info(f"Prediction completed successfully: {prediction}")
+                return [{"image": prediction}]
+                
+            except Exception as e:
+                logging.error(f"Error processing image: {str(e)}")
+                return [{"error": f"Image processing error: {str(e)}"}]
+                
         except Exception as e:
-            self.logger.error(f"Error in prediction: {str(e)}")
-            self.logger.error(traceback.format_exc())
-            return [{"error": str(e)}]
+            logging.error(f"Prediction error: {str(e)}")
+            return [{"error": f"Prediction failed: {str(e)}"}]
